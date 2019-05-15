@@ -3,7 +3,7 @@ var context = yyy.getContext('2d'); //获取yyy二次元上下文
 
 autoSetCanvasSize(yyy);
 
-listenToMouse(yyy);
+listenToUser(yyy);
 
 /*新人做法
 var eraserEnabled = false; //默认不启用橡皮擦
@@ -50,13 +50,48 @@ function autoSetCanvasSize(canvas) {
   }
 }
 
-function listenToMouse(canvas) {
+function listenToUser(canvas) {
   var using = false;
   var lastPoint = { //获取旧点坐标
     x: undefined,
     y: undefined
   };
-
+//特性检测
+if(document.body.ontouchstart !== undefined){
+  //触屏设备
+  canvas.ontouchstart=function(aaa){
+    var x = aaa.touches[0].clientX;
+    var y = aaa.touches[0].clientY;
+    using = true;
+    if (eraserEnabled) {
+      context.clearRect(x - 5, y - 5, 10, 10); //开始擦
+    } else {
+      lastPoint = {//开始画
+        "x": x,
+        "y": y
+      };
+    }
+  }
+  canvas.ontouchmove=function(aaa){
+    var x = aaa.touches[0].clientX;
+    var y = aaa.touches[0].clientY;
+    if(!using){return;}
+    if (eraserEnabled) { //启动橡皮擦
+        context.clearRect(x - 5, y - 5, 10, 10); //开始擦
+    } else { //未启动橡皮擦，开始画
+        var newPoint = { //获取新点坐标
+          "x": x,
+          "y": y
+        };
+        drawLine(lastPoint.x, lastPoint.y, newPoint.x, newPoint.y);
+        lastPoint = newPoint; //实时更新
+      }
+  }
+  canvas.ontouchend=function(aaa){
+    using = false;
+  }
+}else{
+  //非触屏设备
   canvas.onmousedown = function(aaa) { //按下鼠标
     var x = aaa.clientX;
     var y = aaa.clientY;
@@ -85,7 +120,8 @@ function listenToMouse(canvas) {
         lastPoint = newPoint; //实时更新
       }
     };
-  canvas.onmouseup = function(aaa) { //松开鼠标
+  canvas.onmouseup = function(aaa){//松开鼠标
     using = false;
   };
+}
 }
